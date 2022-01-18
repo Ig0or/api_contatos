@@ -1,4 +1,4 @@
-
+from urllib import response
 from flask import Flask, request
 from flask_restful import Resource, Api
 from services import tratamento_services, banco_dados_services
@@ -21,7 +21,7 @@ class CadastrarContato(Resource):
 
 
 class ListarContatos(Resource):
-    def get(post):
+    def get(self):
         todos_contatos = banco_dados_services.listar_todos_contatos_ativos()
         if todos_contatos:
             response = todos_contatos, 200
@@ -31,8 +31,18 @@ class ListarContatos(Resource):
             return response
 
 
+class ListarContatoId(Resource):
+    def get(self, id_contato):
+        contato = banco_dados_services.listar_contato_por_id(id_contato)
+        if contato:
+            response = contato, 200
+            return response
+        else:
+            response = 'Contato n'
+
 api.add_resource(CadastrarContato, '/cadastrar-contato')
 api.add_resource(ListarContatos, '/contatos')
+api.add_resource(ListarContatoId, '/contato/<int:id_contato>')
 
 if __name__ == '__main__':
     app.run(debug=True)
