@@ -11,12 +11,16 @@ def inserir_contato(contato):
     Conexao.colecao_contatos.insert_one(contato)
 
 
-def retonar_proximo_id():
-    ultimo_contato = Conexao.colecao_contatos.find().limit(1).sort([('$natural', -1)])
-    ultimo_contato = list(ultimo_contato)
-    return ultimo_contato[0]['_id'] + 1
-
-
-def listar_todos_contatos():
-    contatos = Conexao.colecao_contatos.find()
+def listar_todos_contatos_ativos():
+    contatos = Conexao.colecao_contatos.find({'situacao': 'ativo'}, {'_id': 0})
     return list(contatos)
+
+
+def listar_contato_por_id(id_contato):
+    contato = Conexao.colecao_contatos.find({'id_contato': id_contato}, {'_id': 0})
+    return contato
+
+print(listar_contato_por_id('124e5155-4583-4539-801c-7b46f24c6411'))
+
+
+

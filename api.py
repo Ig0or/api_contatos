@@ -1,4 +1,4 @@
-from urllib import response
+
 from flask import Flask, request
 from flask_restful import Resource, Api
 from services import tratamento_services, banco_dados_services
@@ -13,20 +13,26 @@ class CadastrarContato(Resource):
         if tratamento_services.validar_informacoes(novo_contato_json):
             contato_tratado = tratamento_services.tratar_informacoes(novo_contato_json)
             banco_dados_services.inserir_contato(contato_tratado)
-            response = '', 200
+            response = 'Contato cadastrado com sucesso.', 200
             return response
         else:
-            response =  '', 400
+            response =  'Erro ao cadastrar o contato.', 400
             return response
+
 
 class ListarContatos(Resource):
     def get(post):
-        todos_contatos = banco_dados_services.listar_todos_contatos()
-        response = todos_contatos, 200
-        return response
+        todos_contatos = banco_dados_services.listar_todos_contatos_ativos()
+        if todos_contatos:
+            response = todos_contatos, 200
+            return response
+        else:
+            response = 'Nenhum contato cadastrado.', 404
+            return response
 
-api.add_resource(CadastrarContato, '/cadastrar_contato')
-api.add_resource(ListarContatos, '/listar_contatos')
+
+api.add_resource(CadastrarContato, '/cadastrar-contato')
+api.add_resource(ListarContatos, '/contatos')
 
 if __name__ == '__main__':
     app.run(debug=True)
