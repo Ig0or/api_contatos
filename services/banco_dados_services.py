@@ -1,4 +1,3 @@
-import re
 from pymongo import MongoClient
 
 class Conexao:
@@ -18,11 +17,8 @@ def listar_todos_contatos_ativos():
 
 
 def listar_contato_por_id(id_contato):
-    contato = Conexao.colecao_contatos.find_one({'id_contato': id_contato}, {'_id': 0})
-    if verificar_status_contato():
-        return contato
-    else:
-        return 
+    contato = Conexao.colecao_contatos.find_one({'id_contato': id_contato, 'situacao': 'ativo'}, {'_id': 0})
+    return contato
 
 
 def verificar_status_contato(contato):
@@ -30,5 +26,3 @@ def verificar_status_contato(contato):
         return True
     else:
         return False
-
-listar_contato_por_id('124e5155-4583-4539-801c-7b46f24c6411')

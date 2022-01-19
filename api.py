@@ -1,4 +1,4 @@
-from urllib import response
+import json
 from flask import Flask, request
 from flask_restful import Resource, Api
 from services import tratamento_services, banco_dados_services
@@ -9,22 +9,21 @@ api = Api(app)
 
 class CadastrarContato(Resource):
     def post(self):
-        novo_contato_json = request.get_json()
-        if tratamento_services.validar_informacoes(novo_contato_json):
-            contato_tratado = tratamento_services.tratar_informacoes(novo_contato_json)
+        try:
+            novo_contato_json = request.get_json()
+            contato_validado_model = tratamento_services.validar_dados_recebidos(novo_contato_json)
+            contato_tratado = tratamento_services.tratar_informacoes(contato_validado_model)
             banco_dados_services.inserir_contato(contato_tratado)
-            response = 'Contato cadastrado com sucesso.', 200
-            return response
-        else:
-            response =  'Erro ao cadastrar o contato.', 400
-            return response
+            return {}, 200
+        except:
+            return {}, 400
 
 
 class ListarContatos(Resource):
     def get(self):
-        todos_contatos = banco_dados_services.listar_todos_contatos_ativos()
-        if todos_contatos:
-            response = todos_contatos, 200
+        contatos = banco_dados_services.listar_todos_contatos_ativos()
+        if contatos:
+            response = contatos, 200
             return response
         else:
             response = 'Nenhum contato cadastrado.', 404
@@ -35,14 +34,22 @@ class ListarContatoId(Resource):
     def get(self, id_contato):
         contato = banco_dados_services.listar_contato_por_id(id_contato)
         if contato:
-            response = contato, 200
-            return response
+            return contato, 200
         else:
-            response = 'Contato n'
+            return 'Contato não existente', 404
 
-api.add_resource(CadastrarContato, '/cadastrar-contato')
+
+class EditarContato(Resource):
+    def put(self, id_contato):
+        contato_informacoes_novas = request.get_json()
+        contato_antigo = banco_dados_services.listar_contato_por_id(id_contato)
+
+
+
 api.add_resource(ListarContatos, '/contatos')
-api.add_resource(ListarContatoId, '/contato/<int:id_contato>')
+api.add_resource(ListarContatoId, '/contato/<string:id_contato>')
+api.add_resource(CadastrarContato, '/cadastrar-contato')
+
 
 if __name__ == '__main__':
     app.run(debug=True)
