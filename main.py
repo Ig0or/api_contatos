@@ -1,13 +1,10 @@
-from ast import Del
-import json
-from urllib import response
 from flask import Flask, request
 from flask_restful import Resource, Api
-from services import tratamento_services, banco_dados_services
+from services import tratamento_services, banco_dados_services, redis_services
 
 app = Flask(__name__)
 api = Api(app)
-    
+
 
 class CadastrarContato(Resource):
     def post(self):
@@ -39,26 +36,39 @@ class EditarContato(Resource):
 
 class ListarContatos(Resource):
     def get(self):
-        contatos = banco_dados_services.listar_todos_contatos_ativos()
-        resposta = contatos, 200
+        contatos_cache = redis_services.buscar_cache_todos_contatos()
+        if contatos_cache:
+            resposta = contatos_cache, 200
+        else:
+            contatos = banco_dados_services.listar_todos_contatos_ativos()
+            redis_services.atribuir_cache_todos_contatos(contatos)
+            resposta = contatos, 200
         return resposta
 
 
 class ListarContatoId(Resource):
     def get(self, id_contato):
-        contato = banco_dados_services.listar_contato_por_id(id_contato)
-        if contato:
-            resposta = contato, 200
-            return resposta
+        contato_cache = redis_services.buscar_cache_contato_id(id_contato)
+        if contato_cache:
+            resposta = contato_cache, 200
         else:
-            resposta = 'Nenhum contato encontrado.', 200
-            return resposta
+            contato_banco_dados = banco_dados_services.listar_contato_por_id(id_contato)
+            if contato_banco_dados: 
+                redis_services.atribuir_cache_contato_id(contato_banco_dados)
+                resposta = contato_banco_dados, 200
+            else:
+                resposta = {}, 200
+        return resposta
 
 
 class RemoverContato(Resource):
     def delete(self, id_contato):
-        banco_dados_services.desativar_contato(id_contato)
-        resposta = 'Contato excluido.', 200
+        contato_removido = banco_dados_services.desativar_contato(id_contato)
+        if contato_removido:
+            redis_services.deletar_cache_contato_removido(id_contato)
+            resposta = 'Contato excluido.', 200
+        else:
+            resposta = {}, 400
         return resposta
 
 
