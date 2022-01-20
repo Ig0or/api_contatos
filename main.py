@@ -13,10 +13,11 @@ class CadastrarContato(Resource):
             contato_validado_model = tratamento_services.validar_dados_recebidos(contato_novo_json)
             contato_tratado = tratamento_services.adicionar_informacoes(contato_validado_model)
             banco_dados_services.inserir_contato(contato_tratado)
+            redis_services.atribuir_cache_todos_contatos()
             resposta = contato_tratado, 200
             return 200
         except:
-            resposta = 'Erro ao cadastrar o contato', 400
+            resposta = {}, 400
             return resposta
 
 
@@ -40,9 +41,9 @@ class ListarContatos(Resource):
         if contatos_cache:
             resposta = contatos_cache, 200
         else:
-            contatos = banco_dados_services.listar_todos_contatos_ativos()
-            redis_services.atribuir_cache_todos_contatos(contatos)
-            resposta = contatos, 200
+            redis_services.atribuir_cache_todos_contatos()
+            contatos_cache = redis_services.buscar_cache_todos_contatos()
+            resposta = contatos_cache, 200
         return resposta
 
 
@@ -52,12 +53,7 @@ class ListarContatoId(Resource):
         if contato_cache:
             resposta = contato_cache, 200
         else:
-            contato_banco_dados = banco_dados_services.listar_contato_por_id(id_contato)
-            if contato_banco_dados: 
-                redis_services.atribuir_cache_contato_id(contato_banco_dados)
-                resposta = contato_banco_dados, 200
-            else:
-                resposta = {}, 200
+            resposta = {}, 400
         return resposta
 
 

@@ -1,9 +1,19 @@
 from itsdangerous import json
 import redis    
 import json
-from datetime import timedelta
+# from banco_dados_services import listar_todos_contatos_ativos
+from services.banco_dados_services import listar_todos_contatos_ativos
 
 redis_cliente = redis.Redis(host='localhost', port=6379, db=0)
+
+
+def buscar_cache_contato_id(id_contato):
+    todos_contatos = buscar_cache_todos_contatos()
+    for contato in todos_contatos:
+        if id_contato == contato['id_contato']:
+            return contato
+    else:
+        return None
 
 
 def buscar_cache_todos_contatos():
@@ -15,24 +25,7 @@ def buscar_cache_todos_contatos():
         return None
 
 
-def atribuir_cache_todos_contatos(contatos):
-    contatos_json_dumps = json.dumps(contatos)
+def atribuir_cache_todos_contatos():
+    contatos_banco_dados = listar_todos_contatos_ativos()
+    contatos_json_dumps = json.dumps(contatos_banco_dados)
     redis_cliente.set('contatos', contatos_json_dumps)
-
-
-def buscar_cache_contato_id(id_contato):
-    contato_cache = redis_cliente.get(id_contato)
-    if contato_cache:
-        contato_cache_json = json.loads(contato_cache)
-        return contato_cache_json
-    else:
-        return None
-
-
-def atribuir_cache_contato_id(contato):
-    contato_json_dumps = json.dumps(contato)
-    redis_cliente.set(contato['id_contato'], contato_json_dumps)
-
-
-def deletar_cache_contato_removido(id_contato):
-    redis_cliente.delete(id_contato)
